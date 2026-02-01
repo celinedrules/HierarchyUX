@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor
+namespace BitWaveLabs.HierarchyUX.Editor
 {
     public class HierarchySeparatorSettings : EditorWindow
     {
@@ -66,7 +66,7 @@ namespace Editor
         private void ApplySettings()
         {
             HierarchySeparatorData data =
-                AssetDatabase.LoadAssetAtPath<HierarchySeparatorData>("Assets/Editor/HierarchySeparatorData.asset");
+                AssetDatabase.LoadAssetAtPath<HierarchySeparatorData>(HierarchySeparator.SeparatorDataPath);
 
             if (!data)
             {

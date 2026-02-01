@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Editor
+namespace BitWaveLabs.HierarchyUX.Editor
 {
     public class HierarchySeparatorData : ScriptableObject
     {

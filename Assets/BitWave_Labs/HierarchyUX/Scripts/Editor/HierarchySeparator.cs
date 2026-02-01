@@ -4,12 +4,12 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor
+namespace BitWaveLabs.HierarchyUX.Editor
 {
     [InitializeOnLoad]
     public static class HierarchySeparator
     {
-        private const string SeparatorDataPath = "Assets/Editor/HierarchySeparatorData.asset";
+        public const string SeparatorDataPath = "Assets/BitWave_Labs/HierarchyUX/Data/HierarchySeparatorData.asset";
         private static HierarchySeparatorData _data;
 
         static HierarchySeparator()
