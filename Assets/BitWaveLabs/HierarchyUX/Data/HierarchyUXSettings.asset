@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: HierarchyUXSettings
   m_EditorClassIdentifier: Assembly-CSharp-Editor::BitWaveLabs.HierarchyUX.Editor.HierarchyUXSettings
   showTreeLines: 1
+  showComponentIcons: 1
   defaultFontSize: 12
   defaultFontColor: {r: 1, g: 1, b: 1, a: 1}
   defaultBackgroundColor: {r: 0, g: 0, b: 1, a: 1}

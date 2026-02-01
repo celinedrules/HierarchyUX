@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BitWaveLabs.HierarchyUX.Editor
 {
@@ -17,6 +18,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
             EditorApplication.hierarchyWindowItemOnGUI += DrawTreeLines;
+            EditorApplication.hierarchyWindowItemOnGUI += DrawComponentIcons;
         }
 
         private static HierarchySeparatorData GetData()
@@ -149,7 +151,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             if (!data.IsSeparator(instanceID))
                 return;
-            
+
             GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
             if (!obj)
@@ -246,10 +248,10 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private static void DrawTreeLines(int instanceID, Rect selectionRect)
         {
             HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
-            
+
             if (!settings.ShowTreeLines)
                 return;
-            
+
             GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
             if (!obj)
@@ -258,12 +260,12 @@ namespace BitWaveLabs.HierarchyUX.Editor
             Transform transform = obj.transform;
 
             // Don't draw for root objects
-            if (transform.parent == null)
+            if (!transform.parent)
                 return;
 
-            Color lineColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            float lineThickness = 1f;
-            float indent = 14f; // Unity's indent per level
+            Color lineColor = new(0.5f, 0.5f, 0.5f, 0.5f);
+            const float lineThickness = 1f;
+            const float indent = 14f; // Unity's indent per level
 
             // Calculate depth
             int depth = 0;
@@ -278,7 +280,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             float xPos = selectionRect.x - 22f;
             float yCenter = selectionRect.y + selectionRect.height / 2f;
 
-            Rect horizontalLine = new Rect(xPos, yCenter, 8f, lineThickness);
+            Rect horizontalLine = new(xPos, yCenter, 8f, lineThickness);
             EditorGUI.DrawRect(horizontalLine, lineColor);
 
             // Vertical line from parent
@@ -286,7 +288,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             float verticalHeight = isLastChild ? selectionRect.height / 2f + 1f : selectionRect.height;
             float verticalY = selectionRect.y;
 
-            Rect verticalLine = new Rect(xPos, verticalY, lineThickness, verticalHeight);
+            Rect verticalLine = new(xPos, verticalY, lineThickness, verticalHeight);
             EditorGUI.DrawRect(verticalLine, lineColor);
 
             // Draw continuation lines for ancestors
@@ -307,6 +309,88 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 current = current.parent;
                 level--;
             }
+        }
+
+        private static void DrawComponentIcons(int instanceID, Rect selectionRect)
+        {
+            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
+    
+            if (!settings.ShowComponentIcons)
+                return;
+            
+            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
+
+            if (!obj)
+                return;
+
+            // Skip separators - they have custom rendering
+            HierarchySeparatorData data = GetData();
+            
+            if (data && data.IsSeparator(instanceID))
+                return;
+
+            Component[] components = obj.GetComponents<Component>();
+
+            if (components.Length == 0)
+                return;
+
+            // Find the primary component to display
+            Component primaryComponent = null;
+
+            // First, try to find an "interesting" component (skip infrastructure)
+            foreach (Component comp in components)
+            {
+                if (!comp) 
+                    continue;
+                
+                if (IsInfrastructureComponent(comp))
+                    continue;
+
+                primaryComponent = comp;
+                break;
+            }
+
+            Texture icon;
+
+            // If no interesting component found, use Transform/RectTransform icon by type
+            if (!primaryComponent)
+            {
+                RectTransform rectTransform = obj.GetComponent<RectTransform>();
+
+                icon = rectTransform
+                    ? EditorGUIUtility.ObjectContent(null, typeof(RectTransform)).image
+                    : EditorGUIUtility.ObjectContent(null, typeof(Transform)).image;
+            }
+            else
+            {
+                icon = EditorGUIUtility.ObjectContent(primaryComponent, primaryComponent.GetType()).image;
+            }
+
+            if (!icon)
+                return;
+
+            // Calculate icon rect (Unity's default icon position)
+            Rect iconRect = new(selectionRect.x - 2, selectionRect.y, 16, 16);
+
+            // Draw background to cover the default icon
+            Color bgColor = EditorGUIUtility.isProSkin
+                ? new Color(0.22f, 0.22f, 0.22f)
+                : new Color(0.76f, 0.76f, 0.76f);
+            EditorGUI.DrawRect(iconRect, bgColor);
+
+            // Draw the component icon
+            GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
+        }
+
+        private static bool IsInfrastructureComponent(Component comp)
+        {
+            // Components that are "infrastructure" - they support other components
+            // but don't define the GameObject's primary purpose
+            return comp is Transform
+                or RectTransform
+                or CanvasRenderer
+                or CanvasScaler
+                or GraphicRaycaster;
         }
     }
 }
