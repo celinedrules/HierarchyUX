@@ -6,6 +6,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
     public class HierarchySeparatorSettings : EditorWindow
     {
         private GameObject _targetObject;
+        private string _targetObjectName;
         private Color _selectedColor = Color.cyan;
         private Color _fontColor = Color.white;
         private int _fontSize = 12;
@@ -19,11 +20,12 @@ namespace BitWaveLabs.HierarchyUX.Editor
             HierarchySeparatorSettings window = CreateInstance<HierarchySeparatorSettings>();
             window.titleContent = new GUIContent("Separator Settings");
             window._targetObject = target;
+            window._targetObjectName = target.name;
             window._selectedColor = initialColor;
             window._fontColor = initialFontColor;
             window._fontSize = initialFontSize;
-            window.minSize = new Vector2(250, 170);
-            window.maxSize = new Vector2(250, 170);
+            window.minSize = new Vector2(800, 600);
+            //window.maxSize = new Vector2(250, 170);
             window.ShowUtility();
         }
 
@@ -39,6 +41,10 @@ namespace BitWaveLabs.HierarchyUX.Editor
             EditorGUILayout.LabelField("Separator Settings", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
 
+            _targetObjectName = EditorGUILayout.TextField("TName", _targetObjectName);
+            
+            EditorGUILayout.Space(5);
+
             _fontSize = EditorGUILayout.IntField("Font Size", _fontSize);
             //_fontSize = Mathf.Clamp(_fontSize, 8, 24);
             _fontColor = EditorGUILayout.ColorField("Font Color", _fontColor);
@@ -47,7 +53,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             _selectedColor = EditorGUILayout.ColorField("Background Color", _selectedColor);
 
-            EditorGUILayout.Space(10);
+            GUILayout.FlexibleSpace();
 
             EditorGUILayout.BeginHorizontal();
             {
@@ -78,7 +84,14 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 AssetDatabase.CreateAsset(data, "Assets/Editor/HierarchySeparatorData.asset");
             }
 
-            data.SetSeparator(_targetObject.GetInstanceID(), _selectedColor, _fontColor, _fontSize);
+            if (_targetObject.name != _targetObjectName)
+            {
+                Undo.RecordObject(_targetObject, "Rename Separator");
+                _targetObject.name = _targetObjectName;
+                EditorUtility.SetDirty(_targetObject);
+            }
+            
+            data.SetSeparator(_targetObject.GetInstanceID(),  _selectedColor, _fontColor, _fontSize);
 
             _targetObject.transform.hideFlags = HideFlags.HideInInspector;
 

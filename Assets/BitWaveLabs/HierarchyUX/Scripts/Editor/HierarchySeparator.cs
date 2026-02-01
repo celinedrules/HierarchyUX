@@ -9,7 +9,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
     [InitializeOnLoad]
     public static class HierarchySeparator
     {
-        public const string SeparatorDataPath = "Assets/BitWave_Labs/HierarchyUX/Data/HierarchySeparatorData.asset";
+        public const string SeparatorDataBasePath = "Assets/BitWaveLabs/HierarchyUX/Data/";
+        public const string SeparatorDataPath = SeparatorDataBasePath + "HierarchySeparatorData.asset";
         private static HierarchySeparatorData _data;
 
         static HierarchySeparator()
@@ -61,14 +62,21 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 return;
             }
 
+            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
             HierarchySeparatorData data = GetData();
-            int id = selected.GetInstanceID();
 
-            Color currentColor = data.GetColor(id);
-            Color fontColor = data.GetFontColor(id);
-            int fontSize = data.GetFontSize(id);
+            data.SetSeparator(
+                selected.GetInstanceID(),
+                settings.DefaultBackgroundColor,
+                settings.DefaultFontColor,
+                settings.DefaultFontSize
+            );
 
-            HierarchySeparatorSettings.Show(selected, currentColor, fontColor, fontSize);
+            selected.transform.hideFlags = HideFlags.HideInInspector;
+
+            EditorUtility.SetDirty(data);
+            AssetDatabase.SaveAssets();
+            EditorApplication.RepaintHierarchyWindow();
         }
 
         [MenuItem("GameObject/Hierarchy UX/Create Separator", true)]
@@ -141,8 +149,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             if (!data.IsSeparator(instanceID))
                 return;
-
-            //GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+            
             GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
             if (!obj)
@@ -238,7 +245,11 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
         private static void DrawTreeLines(int instanceID, Rect selectionRect)
         {
-            //GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
+            
+            if (!settings.ShowTreeLines)
+                return;
+            
             GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
             if (!obj)
