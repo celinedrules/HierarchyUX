@@ -1,321 +1,183 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.Reflection;
 using UnityEditor;
-using System.Collections.Generic;
+using UnityEngine;
 
-[InitializeOnLoad]
-public static class HierarchySeparator
+namespace Editor
 {
-    private const string SeparatorDataPath = "Assets/Editor/HierarchySeparatorData.asset";
-    private static HierarchySeparatorData _data;
-    
-    // Track visible items - use previous frame's data for checking
-    private static HashSet<int> _visibleItemsCurrent = new HashSet<int>();
-    private static HashSet<int> _visibleItemsPrevious = new HashSet<int>();
-    private static int _lastFrameCount = -1;
-
-    static HierarchySeparator()
+    [InitializeOnLoad]
+    public static class HierarchySeparator
     {
-        EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
-    }
+        private const string SeparatorDataPath = "Assets/Editor/HierarchySeparatorData.asset";
+        private static HierarchySeparatorData _data;
 
-    private static HierarchySeparatorData GetData()
-    {
-        if (_data == null)
+        static HierarchySeparator() => EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+
+        private static HierarchySeparatorData GetData()
         {
-            _data = AssetDatabase.LoadAssetAtPath<HierarchySeparatorData>(SeparatorDataPath);
-            if (_data == null)
+            if (!_data)
             {
-                _data = ScriptableObject.CreateInstance<HierarchySeparatorData>();
-                
-                string directory = System.IO.Path.GetDirectoryName(SeparatorDataPath);
-                if (!AssetDatabase.IsValidFolder(directory))
+                _data = AssetDatabase.LoadAssetAtPath<HierarchySeparatorData>(SeparatorDataPath);
+
+                if (!_data)
                 {
-                    System.IO.Directory.CreateDirectory(directory);
-                    AssetDatabase.Refresh();
+                    _data = ScriptableObject.CreateInstance<HierarchySeparatorData>();
+
+                    string directory = System.IO.Path.GetDirectoryName(SeparatorDataPath);
+
+                    if (!AssetDatabase.IsValidFolder(directory))
+                    {
+                        System.IO.Directory.CreateDirectory(directory);
+                        AssetDatabase.Refresh();
+                    }
+
+                    AssetDatabase.CreateAsset(_data, SeparatorDataPath);
+                    AssetDatabase.SaveAssets();
                 }
-                
-                AssetDatabase.CreateAsset(_data, SeparatorDataPath);
-                AssetDatabase.SaveAssets();
             }
-        }
-        return _data;
-    }
 
-    [MenuItem("GameObject/Hierarchy UX/Create Separator", false, 0)]
-    private static void CreateSeparator()
-    {
-        GameObject selected = Selection.activeGameObject;
-        if (selected == null)
-        {
-            Debug.LogWarning("Please select a GameObject in the hierarchy first.");
-            return;
+            return _data;
         }
 
-        Color currentColor = GetData().GetColor(selected.GetInstanceID());
-        ColorPickerWindow.Show(selected, currentColor);
-    }
-
-    [MenuItem("GameObject/Hierarchy UX/Remove Separator", false, 1)]
-    private static void RemoveSeparator()
-    {
-        GameObject selected = Selection.activeGameObject;
-        if (selected == null) return;
-
-        selected.transform.hideFlags = HideFlags.None;
-
-        var data = GetData();
-        data.RemoveSeparator(selected.GetInstanceID());
-        EditorUtility.SetDirty(data);
-        EditorUtility.SetDirty(selected);
-        AssetDatabase.SaveAssets();
-        EditorApplication.RepaintHierarchyWindow();
-    }
-
-    [MenuItem("GameObject/Hierarchy UX/Remove Separator", true)]
-    private static bool RemoveSeparatorValidate()
-    {
-        if (Selection.activeGameObject == null) return false;
-        return GetData().IsSeparator(Selection.activeGameObject.GetInstanceID());
-    }
-
-     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
-    {
-        // Swap buffers at start of new frame
-        if (Time.frameCount != _lastFrameCount)
+        [MenuItem("GameObject/Hierarchy UX/Create Separator", false, 0)]
+        private static void CreateSeparator()
         {
-            _visibleItemsPrevious = _visibleItemsCurrent;
-            _visibleItemsCurrent = new HashSet<int>();
-            _lastFrameCount = Time.frameCount;
+            GameObject selected = Selection.activeGameObject;
+
+            if (!selected)
+            {
+                Debug.LogWarning("Please select a GameObject in the hierarchy first.");
+                return;
+            }
+
+            Color currentColor = GetData().GetColor(selected.GetInstanceID());
+            ColorPickerWindow.Show(selected, currentColor);
         }
-        
-        // Track this item as visible for next frame
-        _visibleItemsCurrent.Add(instanceID);
-        
-        var data = GetData();
-        if (!data.IsSeparator(instanceID)) return;
 
-        GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-        if (obj == null) return;
-
-        Color backgroundColor = data.GetColor(instanceID);
-        bool hasChildren = obj.transform.childCount > 0;
-
-        // Check expanded state using previous frame's data
-        bool isExpanded = hasChildren && IsExpanded(instanceID);
-
-        // Draw full width background
-        Rect fullWidthRect = new Rect(
-            32,
-            selectionRect.y,
-            selectionRect.xMax - 32 + 16,
-            selectionRect.height
-        );
-
-        EditorGUI.DrawRect(fullWidthRect, backgroundColor);
-
-        // Calculate text color
-        float brightness = backgroundColor.r * 0.299f + backgroundColor.g * 0.587f + backgroundColor.b * 0.114f;
-        Color textColor = brightness > 0.5f ? Color.black : Color.white;
-
-        // Draw foldout arrow if has children
-        if (hasChildren)
+        [MenuItem("GameObject/Hierarchy UX/Remove Separator", false, 1)]
+        private static void RemoveSeparator()
         {
-            Rect foldoutRect = new Rect(
-                selectionRect.x - 14,
-                selectionRect.y,
-                14,
-                selectionRect.height
-            );
+            GameObject selected = Selection.activeGameObject;
 
-            GUIStyle arrowStyle = new GUIStyle(EditorStyles.label)
+            if (!selected)
+                return;
+
+            selected.transform.hideFlags = HideFlags.None;
+
+            HierarchySeparatorData data = GetData();
+            data.RemoveSeparator(selected.GetInstanceID());
+
+            EditorUtility.SetDirty(data);
+            EditorUtility.SetDirty(selected);
+            AssetDatabase.SaveAssets();
+            EditorApplication.RepaintHierarchyWindow();
+        }
+
+        [MenuItem("GameObject/Hierarchy UX/Remove Separator", true)]
+        private static bool RemoveSeparatorValidate()
+        {
+            if (!Selection.activeGameObject)
+                return false;
+
+            return GetData().IsSeparator(Selection.activeGameObject.GetInstanceID());
+        }
+
+        private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
+        {
+            HierarchySeparatorData data = GetData();
+
+            if (!data.IsSeparator(instanceID))
+                return;
+
+            GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+
+            if (!obj)
+                return;
+
+            Color backgroundColor = data.GetColor(instanceID);
+            bool hasChildren = obj.transform.childCount > 0;
+
+            // Draw full width background
+            Rect fullWidthRect = new(32, selectionRect.y, selectionRect.xMax - 32 + 16, selectionRect.height);
+            EditorGUI.DrawRect(fullWidthRect, backgroundColor);
+
+            // Calculate text color
+            float brightness = backgroundColor.r * 0.299f + backgroundColor.g * 0.587f + backgroundColor.b * 0.114f;
+            Color textColor = brightness > 0.5f ? Color.black : Color.white;
+
+            // Draw foldout arrow if has children
+            if (hasChildren)
+            {
+                Rect foldoutRect = new(selectionRect.x - 14, selectionRect.y, 14, selectionRect.height);
+
+                GUIStyle arrowStyle = new(EditorStyles.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 10,
+                    normal = { textColor = textColor }
+                };
+
+                bool expanded = IsExpanded(instanceID);
+                string arrow = expanded ? "▼" : "▶";
+
+                GUI.Label(foldoutRect, arrow, arrowStyle);
+            }
+
+            // Draw centered text
+            GUIStyle style = new(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 10,
                 normal = { textColor = textColor }
             };
 
-            bool expanded = IsExpanded(instanceID);
-            Debug.Log(expanded);
-            string arrow = expanded ? "▼" : "▶";
-
-            GUI.Label(foldoutRect, arrow, arrowStyle);
+            EditorGUI.LabelField(fullWidthRect, obj.name, style);
         }
 
-        // Draw centered text
-        GUIStyle style = new GUIStyle(EditorStyles.boldLabel)
+        private static bool IsExpanded(int instanceID)
         {
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = textColor }
-        };
+            Type hierarchyWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
+            EditorWindow window = EditorWindow.GetWindow(hierarchyWindowType, false, null, false);
 
-        EditorGUI.LabelField(fullWidthRect, obj.name, style);
-    }
-    
-     
-     private static void SetExpanded(int instanceID, bool expanded)
-    {
-        var hierarchyWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
-        var window = EditorWindow.GetWindow(hierarchyWindowType, false, null, false);
-    
-        if (window == null) return;
+            if (!window)
+                return false;
 
-        var sceneHierarchyProperty = hierarchyWindowType.GetProperty("sceneHierarchy", 
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        var sceneHierarchy = sceneHierarchyProperty?.GetValue(window);
-    
-        if (sceneHierarchy == null) return;
+            FieldInfo sceneHierarchyField = hierarchyWindowType.GetField("m_SceneHierarchy",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            object sceneHierarchy = sceneHierarchyField?.GetValue(window);
 
-        var setExpandedMethod = sceneHierarchy.GetType().GetMethod("ExpandTreeViewItem", 
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-    
-        setExpandedMethod?.Invoke(sceneHierarchy, new object[] { instanceID, expanded });
-    }
+            if (sceneHierarchy == null)
+                return false;
 
-    private static bool IsExpanded(int instanceID)
-    {
-        var hierarchyWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
-        var window = EditorWindow.GetWindow(hierarchyWindowType, false, null, false);
+            FieldInfo treeViewStateField = sceneHierarchy.GetType().GetField("m_TreeViewState",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            object treeViewState = treeViewStateField?.GetValue(sceneHierarchy);
 
-        if (window == null) return false;
+            if (treeViewState == null)
+                return false;
 
-        var sceneHierarchyField = hierarchyWindowType.GetField("m_SceneHierarchy",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        var sceneHierarchy = sceneHierarchyField?.GetValue(window);
+            PropertyInfo expandedIDsProperty = treeViewState.GetType().GetProperty("expandedIDs",
+                BindingFlags.Instance | BindingFlags.Public);
+            IList expandedIDs = expandedIDsProperty?.GetValue(treeViewState) as IList;
 
-        if (sceneHierarchy == null) return false;
+            if (expandedIDs == null)
+                return false;
 
-        var treeViewStateField = sceneHierarchy.GetType().GetField("m_TreeViewState",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        var treeViewState = treeViewStateField?.GetValue(sceneHierarchy);
-
-        if (treeViewState == null) return false;
-
-        var expandedIDsProperty = treeViewState.GetType().GetProperty("expandedIDs",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-        var expandedIDs = expandedIDsProperty?.GetValue(treeViewState) as System.Collections.IList;
-
-        if (expandedIDs == null) return false;
-
-        foreach (var entityId in expandedIDs)
-        {
-            var dataField = entityId.GetType().GetField("m_Data",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-            if (dataField != null)
+            foreach (object entityId in expandedIDs)
             {
-                var id = (int)dataField.GetValue(entityId);
-                if (id == instanceID) return true;
+                FieldInfo dataField =
+                    entityId.GetType().GetField("m_Data", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                if (dataField != null)
+                {
+                    int id = (int)dataField.GetValue(entityId);
+
+                    if (id == instanceID)
+                        return true;
+                }
             }
+
+            return false;
         }
-
-        return false;
-    }
-}
-
-public class HierarchySeparatorData : ScriptableObject
-{
-    [System.Serializable]
-    public class SeparatorEntry
-    {
-        public int instanceID;
-        public string guid; // For persistence across sessions
-        public Color color = Color.gray;
-    }
-
-    public List<SeparatorEntry> separators = new List<SeparatorEntry>();
-
-    public bool IsSeparator(int instanceID)
-    {
-        return separators.Exists(s => s.instanceID == instanceID);
-    }
-
-    public Color GetColor(int instanceID)
-    {
-        var entry = separators.Find(s => s.instanceID == instanceID);
-        return entry?.color ?? Color.gray;
-    }
-
-    public void SetSeparator(int instanceID, Color color)
-    {
-        var entry = separators.Find(s => s.instanceID == instanceID);
-        if (entry != null)
-        {
-            entry.color = color;
-        }
-        else
-        {
-            separators.Add(new SeparatorEntry { instanceID = instanceID, color = color });
-        }
-    }
-
-    public void RemoveSeparator(int instanceID)
-    {
-        separators.RemoveAll(s => s.instanceID == instanceID);
-    }
-}
-
-public class ColorPickerWindow : EditorWindow
-{
-    private GameObject _targetObject;
-    private Color _selectedColor = Color.cyan;
-
-    public static void Show(GameObject target, Color initialColor)
-    {
-        var window = GetWindow<ColorPickerWindow>("Pick Separator Color");
-        window._targetObject = target;
-        window._selectedColor = initialColor;
-        window.minSize = new Vector2(250, 100);
-        window.maxSize = new Vector2(250, 100);
-        window.ShowUtility();
-    }
-
-    private void OnGUI()
-    {
-        if (_targetObject == null)
-        {
-            Close();
-            return;
-        }
-
-        EditorGUILayout.Space(10);
-        EditorGUILayout.LabelField("Select Separator Color", EditorStyles.boldLabel);
-        EditorGUILayout.Space(5);
-
-        _selectedColor = EditorGUILayout.ColorField("Color", _selectedColor);
-
-        EditorGUILayout.Space(10);
-
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Apply", GUILayout.Height(30)))
-        {
-            ApplyColor();
-            Close();
-        }
-        if (GUILayout.Button("Cancel", GUILayout.Height(30)))
-        {
-            Close();
-        }
-        EditorGUILayout.EndHorizontal();
-    }
-
-    private void ApplyColor()
-    {
-        var data = AssetDatabase.LoadAssetAtPath<HierarchySeparatorData>("Assets/Editor/HierarchySeparatorData.asset");
-        if (data == null)
-        {
-            data = ScriptableObject.CreateInstance<HierarchySeparatorData>();
-            
-            if (!AssetDatabase.IsValidFolder("Assets/Editor"))
-            {
-                AssetDatabase.CreateFolder("Assets", "Editor");
-            }
-            
-            AssetDatabase.CreateAsset(data, "Assets/Editor/HierarchySeparatorData.asset");
-        }
-
-        data.SetSeparator(_targetObject.GetInstanceID(), _selectedColor);
-        EditorUtility.SetDirty(data);
-        AssetDatabase.SaveAssets();
-        EditorApplication.RepaintHierarchyWindow();
     }
 }
