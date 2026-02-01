@@ -12,7 +12,11 @@ namespace Editor
         private const string SeparatorDataPath = "Assets/Editor/HierarchySeparatorData.asset";
         private static HierarchySeparatorData _data;
 
-        static HierarchySeparator() => EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+        static HierarchySeparator()
+        {
+            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+            EditorApplication.hierarchyWindowItemOnGUI += DrawTreeLines;
+        }
 
         private static HierarchySeparatorData GetData()
         {
@@ -25,6 +29,12 @@ namespace Editor
                     _data = ScriptableObject.CreateInstance<HierarchySeparatorData>();
 
                     string directory = System.IO.Path.GetDirectoryName(SeparatorDataPath);
+
+                    if (directory == null)
+                    {
+                        Debug.LogWarning("Can't find SeparatorData in " + SeparatorDataPath);
+                        return null;
+                    }
 
                     if (!AssetDatabase.IsValidFolder(directory))
                     {
@@ -132,7 +142,8 @@ namespace Editor
             if (!data.IsSeparator(instanceID))
                 return;
 
-            GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+            //GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
             if (!obj)
                 return;
@@ -223,6 +234,68 @@ namespace Editor
             }
 
             return false;
+        }
+
+        private static void DrawTreeLines(int instanceID, Rect selectionRect)
+        {
+            //GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
+
+            if (!obj)
+                return;
+
+            Transform transform = obj.transform;
+
+            // Don't draw for root objects
+            if (transform.parent == null)
+                return;
+
+            Color lineColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            float lineThickness = 1f;
+            float indent = 14f; // Unity's indent per level
+
+            // Calculate depth
+            int depth = 0;
+            Transform current = transform.parent;
+            while (current != null)
+            {
+                depth++;
+                current = current.parent;
+            }
+
+            // Horizontal line to the item
+            float xPos = selectionRect.x - 22f;
+            float yCenter = selectionRect.y + selectionRect.height / 2f;
+
+            Rect horizontalLine = new Rect(xPos, yCenter, 8f, lineThickness);
+            EditorGUI.DrawRect(horizontalLine, lineColor);
+
+            // Vertical line from parent
+            bool isLastChild = transform.GetSiblingIndex() == transform.parent.childCount - 1;
+            float verticalHeight = isLastChild ? selectionRect.height / 2f + 1f : selectionRect.height;
+            float verticalY = selectionRect.y;
+
+            Rect verticalLine = new Rect(xPos, verticalY, lineThickness, verticalHeight);
+            EditorGUI.DrawRect(verticalLine, lineColor);
+
+            // Draw continuation lines for ancestors
+            current = transform.parent;
+            int level = depth - 1;
+
+            while (current && current.parent)
+            {
+                bool ancestorIsLastChild = current.GetSiblingIndex() == current.parent.childCount - 1;
+
+                if (!ancestorIsLastChild)
+                {
+                    float ancestorX = selectionRect.x - 22f - (indent * (depth - level));
+                    Rect continuationLine = new Rect(ancestorX, selectionRect.y, lineThickness, selectionRect.height);
+                    EditorGUI.DrawRect(continuationLine, lineColor);
+                }
+
+                current = current.parent;
+                level--;
+            }
         }
     }
 }
