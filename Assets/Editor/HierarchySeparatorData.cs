@@ -10,6 +10,8 @@ namespace Editor
         {
             public int instanceID;
             public Color color = Color.gray;
+            public Color fontColor = Color.white;
+            public int fontSize = 12;
         }
 
         public List<SeparatorEntry> separators = new();
@@ -22,14 +24,38 @@ namespace Editor
             return entry?.color ?? Color.gray;
         }
 
-        public void SetSeparator(int instanceID, Color color)
+        public Color GetFontColor(int instanceID)
         {
             SeparatorEntry entry = separators.Find(s => s.instanceID == instanceID);
-            
+            return entry?.fontColor ?? Color.white;
+        }
+
+        public int GetFontSize(int instanceID)
+        {
+            SeparatorEntry entry = separators.Find(s => s.instanceID == instanceID);
+            return entry?.fontSize ?? 12;
+        }
+
+        public void SetSeparator(int instanceID, Color color, Color fontColor, int fontSize)
+        {
+            SeparatorEntry entry = separators.Find(s => s.instanceID == instanceID);
+        
             if (entry != null)
+            {
                 entry.color = color;
+                entry.fontColor = fontColor;
+                entry.fontSize = fontSize;
+            }
             else
-                separators.Add(new SeparatorEntry { instanceID = instanceID, color = color });
+            {
+                separators.Add(new SeparatorEntry
+                {
+                    instanceID = instanceID,
+                    color = color,
+                    fontColor = fontColor,
+                    fontSize = fontSize
+                });
+            }
         }
 
         public void RemoveSeparator(int instanceID)

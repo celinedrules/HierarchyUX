@@ -51,8 +51,50 @@ namespace Editor
                 return;
             }
 
-            Color currentColor = GetData().GetColor(selected.GetInstanceID());
-            ColorPickerWindow.Show(selected, currentColor);
+            HierarchySeparatorData data = GetData();
+            int id = selected.GetInstanceID();
+
+            Color currentColor = data.GetColor(id);
+            Color fontColor = data.GetFontColor(id);
+            int fontSize = data.GetFontSize(id);
+
+            HierarchySeparatorSettings.Show(selected, currentColor, fontColor, fontSize);
+        }
+
+        [MenuItem("GameObject/Hierarchy UX/Create Separator", true)]
+        private static bool CreateSeparatorValidate()
+        {
+            if (!Selection.activeGameObject)
+                return false;
+
+            return !GetData().IsSeparator(Selection.activeGameObject.GetInstanceID());
+        }
+
+        [MenuItem("GameObject/Hierarchy UX/Edit Separator", false, 1)]
+        private static void EditSeparator()
+        {
+            GameObject selected = Selection.activeGameObject;
+
+            if (!selected)
+                return;
+
+            HierarchySeparatorData data = GetData();
+            int id = selected.GetInstanceID();
+
+            Color currentColor = data.GetColor(id);
+            Color fontColor = data.GetFontColor(id);
+            int fontSize = data.GetFontSize(id);
+
+            HierarchySeparatorSettings.Show(selected, currentColor, fontColor, fontSize);
+        }
+
+        [MenuItem("GameObject/Hierarchy UX/Edit Separator", true)]
+        private static bool EditSeparatorValidate()
+        {
+            if (!Selection.activeGameObject)
+                return false;
+
+            return GetData().IsSeparator(Selection.activeGameObject.GetInstanceID());
         }
 
         [MenuItem("GameObject/Hierarchy UX/Remove Separator", false, 1)]
@@ -96,26 +138,28 @@ namespace Editor
                 return;
 
             Color backgroundColor = data.GetColor(instanceID);
+            Color fontColor = data.GetFontColor(instanceID);
+            int fontSize = data.GetFontSize(instanceID);
             bool hasChildren = obj.transform.childCount > 0;
 
             // Draw full width background
             Rect fullWidthRect = new(32, selectionRect.y, selectionRect.xMax - 32 + 16, selectionRect.height);
             EditorGUI.DrawRect(fullWidthRect, backgroundColor);
 
-            // Calculate text color
-            float brightness = backgroundColor.r * 0.299f + backgroundColor.g * 0.587f + backgroundColor.b * 0.114f;
-            Color textColor = brightness > 0.5f ? Color.black : Color.white;
-
             // Draw foldout arrow if has children
             if (hasChildren)
             {
                 Rect foldoutRect = new(selectionRect.x - 14, selectionRect.y, 14, selectionRect.height);
+                Color defaultColor = EditorGUIUtility.isProSkin
+                    ? new Color(0.16f, 0.16f, 0.16f).gamma
+                    : new Color(0.024f, 0.024f, 0.024f).gamma;
 
                 GUIStyle arrowStyle = new(EditorStyles.label)
                 {
                     alignment = TextAnchor.MiddleCenter,
-                    fontSize = 10,
-                    normal = { textColor = textColor }
+                    fontSize = EditorStyles.foldout.fontSize,
+                    normal = { textColor = defaultColor },
+                    hover = { textColor = defaultColor }
                 };
 
                 bool expanded = IsExpanded(instanceID);
@@ -128,7 +172,8 @@ namespace Editor
             GUIStyle style = new(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = textColor }
+                fontSize = fontSize,
+                normal = { textColor = fontColor.gamma }
             };
 
             EditorGUI.LabelField(fullWidthRect, obj.name, style);
