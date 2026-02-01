@@ -16,6 +16,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
         static HierarchySeparator()
         {
+            EditorApplication.hierarchyWindowItemOnGUI += DrawAlternatingBackground;
             EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
             EditorApplication.hierarchyWindowItemOnGUI += DrawTreeLines;
             EditorApplication.hierarchyWindowItemOnGUI += DrawComponentIcons;
@@ -314,10 +315,10 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private static void DrawComponentIcons(int instanceID, Rect selectionRect)
         {
             HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
-    
+
             if (!settings.ShowComponentIcons)
                 return;
-            
+
             GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
 
             if (!obj)
@@ -325,7 +326,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             // Skip separators - they have custom rendering
             HierarchySeparatorData data = GetData();
-            
+
             if (data && data.IsSeparator(instanceID))
                 return;
 
@@ -340,9 +341,9 @@ namespace BitWaveLabs.HierarchyUX.Editor
             // First, try to find an "interesting" component (skip infrastructure)
             foreach (Component comp in components)
             {
-                if (!comp) 
+                if (!comp)
                     continue;
-                
+
                 if (IsInfrastructureComponent(comp))
                     continue;
 
@@ -391,6 +392,47 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 or CanvasRenderer
                 or CanvasScaler
                 or GraphicRaycaster;
+        }
+
+        private static void DrawAlternatingBackground(int instanceID, Rect selectionRect)
+        {
+            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
+
+            if (!settings.ShowAlternatingRows)
+                return;
+
+            // Skip separators - they have custom backgrounds
+            HierarchySeparatorData data = GetData();
+            
+            if (data && data.IsSeparator(instanceID))
+                return;
+
+            // Calculate row index based on Y position
+            int rowIndex = Mathf.FloorToInt(selectionRect.y / selectionRect.height);
+
+            // Only draw on odd rows
+            if (rowIndex % 2 != 1)
+                return;
+            
+            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
+            
+            if (!obj)
+                return;
+
+            // Skip if this object is selected
+            if (Selection.activeGameObject == obj || Array.IndexOf(Selection.gameObjects, obj) >= 0)
+                return;
+
+            if (selectionRect.Contains(Event.current.mousePosition))
+                return;
+
+            // Subtle semi-transparent tint
+            Color altColor = EditorGUIUtility.isProSkin
+                ? new Color(1f, 1f, 1f, 0.04f)
+                : new Color(0f, 0f, 0f, 0.04f);
+
+            Rect fullWidthRect = new(0, selectionRect.y, selectionRect.xMax + 16, selectionRect.height);
+            EditorGUI.DrawRect(fullWidthRect, altColor);
         }
     }
 }

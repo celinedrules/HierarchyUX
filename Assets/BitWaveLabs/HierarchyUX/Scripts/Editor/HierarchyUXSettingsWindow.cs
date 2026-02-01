@@ -11,6 +11,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private bool _useProjectSettings;
         private bool _showTreeLines = true;
         private bool _showComponentIcons = true;
+        private bool _showAlternatingRows = true;
         private int _defaultFontSize = 12;
         private Color _defaultFontColor = Color.white;
         private Color _defaultBackgroundColor = Color.gray;
@@ -19,6 +20,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             public bool ShowTreeLines;
             public bool ShowComponentIcons;
+            public bool ShowAlternatingRows;
             public int DefaultFontSize;
             public Color DefaultFontColor;
             public Color DefaultBackgroundColor;
@@ -38,6 +40,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
                     {
                         ShowTreeLines = settings.showTreeLines,
                         ShowComponentIcons = settings.showComponentIcons,
+                        ShowAlternatingRows = settings.showAlternatingRows,
                         DefaultFontSize = settings.defaultFontSize,
                         DefaultFontColor = settings.defaultFontColor,
                         DefaultBackgroundColor = settings.defaultBackgroundColor
@@ -50,6 +53,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             {
                 ShowTreeLines = EditorPrefs.GetBool(PrefsPrefix + "ShowTreeLines", true),
                 ShowComponentIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowComponentIcons", true),
+                ShowAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true),
                 DefaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12),
                 DefaultFontColor = LoadColorFromPrefsStatic("DefaultFontColor", Color.white),
                 DefaultBackgroundColor = LoadColorFromPrefsStatic("DefaultBackgroundColor", Color.gray)
@@ -104,6 +108,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             _showTreeLines = EditorGUILayout.Toggle("Show Tree Lines", _showTreeLines);
             _showComponentIcons = EditorGUILayout.Toggle("Show Component Icons", _showComponentIcons);
+            _showAlternatingRows = EditorGUILayout.Toggle("Show Alternating Rows", _showAlternatingRows);
 
             EditorGUILayout.Space(5);
             EditorGUILayout.LabelField("Separator Defaults", EditorStyles.boldLabel);
@@ -145,6 +150,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             _showTreeLines = EditorPrefs.GetBool(PrefsPrefix + "ShowTreeLines", true);
             _showComponentIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowComponentIcons", true);
+            _showAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true);
             _defaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12);
             _defaultFontColor = LoadColorFromPrefs("DefaultFontColor", Color.white);
             _defaultBackgroundColor = LoadColorFromPrefs("DefaultBackgroundColor", Color.gray);
@@ -154,6 +160,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             EditorPrefs.SetBool(PrefsPrefix + "ShowTreeLines", _showTreeLines);
             EditorPrefs.SetBool(PrefsPrefix + "ShowComponentIcons", _showComponentIcons);
+            EditorPrefs.SetBool(PrefsPrefix + "ShowAlternatingRows", _showAlternatingRows);
             EditorPrefs.SetInt(PrefsPrefix + "DefaultFontSize", _defaultFontSize);
             SaveColorToPrefs("DefaultFontColor", _defaultFontColor);
             SaveColorToPrefs("DefaultBackgroundColor", _defaultBackgroundColor);
@@ -167,6 +174,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             {
                 _showTreeLines = settings.showTreeLines;
                 _showComponentIcons = settings.showComponentIcons;
+                _showAlternatingRows = settings.showAlternatingRows;
                 _defaultFontSize = settings.defaultFontSize;
                 _defaultFontColor = settings.defaultFontColor;
                 _defaultBackgroundColor = settings.defaultBackgroundColor;
@@ -193,6 +201,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             settings.showTreeLines = _showTreeLines;
             settings.showComponentIcons = _showComponentIcons;
+            settings.showAlternatingRows = _showAlternatingRows;
             settings.defaultFontSize = _defaultFontSize;
             settings.defaultFontColor = _defaultFontColor;
             settings.defaultBackgroundColor = _defaultBackgroundColor;
