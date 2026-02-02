@@ -5,7 +5,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 {
     public class HierarchyUXSettingsWindow : EditorWindow
     {
-        private const string SettingsAssetPath = HierarchySeparator.SeparatorDataBasePath + "HierarchyUXSettings.asset";
+        private const string SettingsAssetPath = HierarchyUX.DataBasePath + "HierarchyUXSettings.asset";
         private const string PrefsPrefix = "HierarchyUX_";
 
         private bool _useProjectSettings;

@@ -16,4 +16,4 @@ MonoBehaviour:
   - instanceID: 48746
     color: {r: 0, g: 0, b: 1, a: 1}
     fontColor: {r: 1, g: 1, b: 1, a: 1}
-    fontSize: 16
+    fontSize: 12

@@ -3,23 +3,18 @@ using System.Collections;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BitWaveLabs.HierarchyUX.Editor
 {
-    [InitializeOnLoad]
     public static class HierarchySeparator
     {
-        public const string SeparatorDataBasePath = "Assets/BitWaveLabs/HierarchyUX/Data/";
-        public const string SeparatorDataPath = SeparatorDataBasePath + "HierarchySeparatorData.asset";
+        public const string SeparatorDataPath = HierarchyUX.DataBasePath + "HierarchySeparatorData.asset";
         private static HierarchySeparatorData _data;
 
-        static HierarchySeparator()
+        public static bool IsSeparator(int instanceID)
         {
-            EditorApplication.hierarchyWindowItemOnGUI += DrawAlternatingBackground;
-            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
-            EditorApplication.hierarchyWindowItemOnGUI += DrawTreeLines;
-            EditorApplication.hierarchyWindowItemOnGUI += DrawComponentIcons;
+            HierarchySeparatorData data = GetData();
+            return data != null && data.IsSeparator(instanceID);
         }
 
         private static HierarchySeparatorData GetData()
@@ -146,7 +141,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             return GetData().IsSeparator(Selection.activeGameObject.GetInstanceID());
         }
 
-        private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
+        public static void Draw(int instanceID, Rect selectionRect)
         {
             HierarchySeparatorData data = GetData();
 
@@ -244,195 +239,6 @@ namespace BitWaveLabs.HierarchyUX.Editor
             }
 
             return false;
-        }
-
-        private static void DrawTreeLines(int instanceID, Rect selectionRect)
-        {
-            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
-
-            if (!settings.ShowTreeLines)
-                return;
-
-            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
-
-            if (!obj)
-                return;
-
-            Transform transform = obj.transform;
-
-            // Don't draw for root objects
-            if (!transform.parent)
-                return;
-
-            Color lineColor = new(0.5f, 0.5f, 0.5f, 0.5f);
-            const float lineThickness = 1f;
-            const float indent = 14f; // Unity's indent per level
-
-            // Calculate depth
-            int depth = 0;
-            Transform current = transform.parent;
-            while (current != null)
-            {
-                depth++;
-                current = current.parent;
-            }
-
-            // Horizontal line to the item
-            float xPos = selectionRect.x - 22f;
-            float yCenter = selectionRect.y + selectionRect.height / 2f;
-
-            Rect horizontalLine = new(xPos, yCenter, 8f, lineThickness);
-            EditorGUI.DrawRect(horizontalLine, lineColor);
-
-            // Vertical line from parent
-            bool isLastChild = transform.GetSiblingIndex() == transform.parent.childCount - 1;
-            float verticalHeight = isLastChild ? selectionRect.height / 2f + 1f : selectionRect.height;
-            float verticalY = selectionRect.y;
-
-            Rect verticalLine = new(xPos, verticalY, lineThickness, verticalHeight);
-            EditorGUI.DrawRect(verticalLine, lineColor);
-
-            // Draw continuation lines for ancestors
-            current = transform.parent;
-            int level = depth - 1;
-
-            while (current && current.parent)
-            {
-                bool ancestorIsLastChild = current.GetSiblingIndex() == current.parent.childCount - 1;
-
-                if (!ancestorIsLastChild)
-                {
-                    float ancestorX = selectionRect.x - 22f - (indent * (depth - level));
-                    Rect continuationLine = new Rect(ancestorX, selectionRect.y, lineThickness, selectionRect.height);
-                    EditorGUI.DrawRect(continuationLine, lineColor);
-                }
-
-                current = current.parent;
-                level--;
-            }
-        }
-
-        private static void DrawComponentIcons(int instanceID, Rect selectionRect)
-        {
-            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
-
-            if (!settings.ShowComponentIcons)
-                return;
-
-            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
-
-            if (!obj)
-                return;
-
-            // Skip separators - they have custom rendering
-            HierarchySeparatorData data = GetData();
-
-            if (data && data.IsSeparator(instanceID))
-                return;
-
-            Component[] components = obj.GetComponents<Component>();
-
-            if (components.Length == 0)
-                return;
-
-            // Find the primary component to display
-            Component primaryComponent = null;
-
-            // First, try to find an "interesting" component (skip infrastructure)
-            foreach (Component comp in components)
-            {
-                if (!comp)
-                    continue;
-
-                if (IsInfrastructureComponent(comp))
-                    continue;
-
-                primaryComponent = comp;
-                break;
-            }
-
-            Texture icon;
-
-            // If no interesting component found, use Transform/RectTransform icon by type
-            if (!primaryComponent)
-            {
-                RectTransform rectTransform = obj.GetComponent<RectTransform>();
-
-                icon = rectTransform
-                    ? EditorGUIUtility.ObjectContent(null, typeof(RectTransform)).image
-                    : EditorGUIUtility.ObjectContent(null, typeof(Transform)).image;
-            }
-            else
-            {
-                icon = EditorGUIUtility.ObjectContent(primaryComponent, primaryComponent.GetType()).image;
-            }
-
-            if (!icon)
-                return;
-
-            // Calculate icon rect (Unity's default icon position)
-            Rect iconRect = new(selectionRect.x - 2, selectionRect.y, 16, 16);
-
-            // Draw background to cover the default icon
-            Color bgColor = EditorGUIUtility.isProSkin
-                ? new Color(0.22f, 0.22f, 0.22f)
-                : new Color(0.76f, 0.76f, 0.76f);
-            EditorGUI.DrawRect(iconRect, bgColor);
-
-            // Draw the component icon
-            GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
-        }
-
-        private static bool IsInfrastructureComponent(Component comp)
-        {
-            // Components that are "infrastructure" - they support other components
-            // but don't define the GameObject's primary purpose
-            return comp is Transform
-                or RectTransform
-                or CanvasRenderer
-                or CanvasScaler
-                or GraphicRaycaster;
-        }
-
-        private static void DrawAlternatingBackground(int instanceID, Rect selectionRect)
-        {
-            HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
-
-            if (!settings.ShowAlternatingRows)
-                return;
-
-            // Skip separators - they have custom backgrounds
-            HierarchySeparatorData data = GetData();
-            
-            if (data && data.IsSeparator(instanceID))
-                return;
-
-            // Calculate row index based on Y position
-            int rowIndex = Mathf.FloorToInt(selectionRect.y / selectionRect.height);
-
-            // Only draw on odd rows
-            if (rowIndex % 2 != 1)
-                return;
-            
-            GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
-            
-            if (!obj)
-                return;
-
-            // Skip if this object is selected
-            if (Selection.activeGameObject == obj || Array.IndexOf(Selection.gameObjects, obj) >= 0)
-                return;
-
-            if (selectionRect.Contains(Event.current.mousePosition))
-                return;
-
-            // Subtle semi-transparent tint
-            Color altColor = EditorGUIUtility.isProSkin
-                ? new Color(1f, 1f, 1f, 0.04f)
-                : new Color(0f, 0f, 0f, 0.04f);
-
-            Rect fullWidthRect = new(0, selectionRect.y, selectionRect.xMax + 16, selectionRect.height);
-            EditorGUI.DrawRect(fullWidthRect, altColor);
         }
     }
 }
