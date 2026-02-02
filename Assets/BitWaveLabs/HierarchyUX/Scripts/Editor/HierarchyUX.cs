@@ -13,7 +13,9 @@ namespace BitWaveLabs.HierarchyUX.Editor
             EditorApplication.hierarchyWindowItemOnGUI += HierarchySeparator.Draw;
             EditorApplication.hierarchyWindowItemOnGUI += HierarchyTreeLines.Draw;
             EditorApplication.hierarchyWindowItemOnGUI += HierarchyGameObjectIcons.Draw;
+            EditorApplication.hierarchyWindowItemOnGUI += HierarchyComponentButtons.Draw;
             EditorApplication.hierarchyWindowItemOnGUI += HierarchyButtons.Draw;
+            
         }
     }
 }

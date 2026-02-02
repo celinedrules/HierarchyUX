@@ -8,6 +8,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         public bool showTreeLines = true;
         public bool showGameObjectIcons = true;
         public bool showButtons = true;
+        public bool showComponentButtons = true;
         public bool showAlternatingRows = true;
         public int defaultFontSize = 12;
         public Color defaultFontColor = Color.white;

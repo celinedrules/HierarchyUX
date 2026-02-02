@@ -15,6 +15,7 @@ MonoBehaviour:
   showTreeLines: 1
   showGameObjectIcons: 1
   showButtons: 1
+  showComponentButtons: 1
   showAlternatingRows: 1
   defaultFontSize: 12
   defaultFontColor: {r: 1, g: 1, b: 1, a: 1}
