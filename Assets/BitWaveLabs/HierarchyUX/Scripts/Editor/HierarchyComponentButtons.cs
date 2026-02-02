@@ -61,9 +61,10 @@ namespace BitWaveLabs.HierarchyUX.Editor
                     continue;
 
                 Rect iconRect = new Rect(currentX, selectionRect.y, IconSize, IconSize);
+                bool isHovered = iconRect.Contains(Event.current.mousePosition);
 
                 // Draw hover background
-                if (iconRect.Contains(Event.current.mousePosition))
+                if (isHovered)
                 {
                     Color hoverColor = EditorGUIUtility.isProSkin
                         ? new Color(1f, 1f, 1f, 0.1f)
@@ -76,7 +77,15 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 if (comp is Behaviour behaviour && !behaviour.enabled)
                     GUI.color = new Color(1f, 1f, 1f, 0.4f);
 
+                // Draw button with tooltip and handle click
+                string componentName = ObjectNames.NicifyVariableName(comp.GetType().Name);
+                if (GUI.Button(iconRect, new GUIContent("", componentName), GUIStyle.none))
+                {
+                    HierarchyComponentPopup.Show(comp, iconRect);
+                }
+
                 GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
+
                 GUI.color = previousColor;
 
                 currentX += IconSize + IconSpacing;
