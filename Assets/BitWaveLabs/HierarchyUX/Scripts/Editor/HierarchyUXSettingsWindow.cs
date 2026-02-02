@@ -11,6 +11,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private bool _useProjectSettings;
         private bool _showTreeLines = true;
         private bool _showComponentIcons = true;
+        private bool _showButtons = true;
         private bool _showAlternatingRows = true;
         private int _defaultFontSize = 12;
         private Color _defaultFontColor = Color.white;
@@ -20,6 +21,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             public bool ShowTreeLines;
             public bool ShowComponentIcons;
+            public bool ShowButtons;
             public bool ShowAlternatingRows;
             public int DefaultFontSize;
             public Color DefaultFontColor;
@@ -40,6 +42,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
                     {
                         ShowTreeLines = settings.showTreeLines,
                         ShowComponentIcons = settings.showComponentIcons,
+                        ShowButtons = settings.showButtons,
                         ShowAlternatingRows = settings.showAlternatingRows,
                         DefaultFontSize = settings.defaultFontSize,
                         DefaultFontColor = settings.defaultFontColor,
@@ -53,6 +56,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             {
                 ShowTreeLines = EditorPrefs.GetBool(PrefsPrefix + "ShowTreeLines", true),
                 ShowComponentIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowComponentIcons", true),
+                ShowButtons = EditorPrefs.GetBool(PrefsPrefix + "ShowButtons", true),
                 ShowAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true),
                 DefaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12),
                 DefaultFontColor = LoadColorFromPrefsStatic("DefaultFontColor", Color.white),
@@ -108,6 +112,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             _showTreeLines = EditorGUILayout.Toggle("Show Tree Lines", _showTreeLines);
             _showComponentIcons = EditorGUILayout.Toggle("Show Component Icons", _showComponentIcons);
+            _showButtons = EditorGUILayout.Toggle("Show Buttons", _showButtons);
             _showAlternatingRows = EditorGUILayout.Toggle("Show Alternating Rows", _showAlternatingRows);
 
             EditorGUILayout.Space(5);
@@ -150,6 +155,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             _showTreeLines = EditorPrefs.GetBool(PrefsPrefix + "ShowTreeLines", true);
             _showComponentIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowComponentIcons", true);
+            _showButtons = EditorPrefs.GetBool(PrefsPrefix + "ShowButtons", true);
             _showAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true);
             _defaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12);
             _defaultFontColor = LoadColorFromPrefs("DefaultFontColor", Color.white);
@@ -160,6 +166,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         {
             EditorPrefs.SetBool(PrefsPrefix + "ShowTreeLines", _showTreeLines);
             EditorPrefs.SetBool(PrefsPrefix + "ShowComponentIcons", _showComponentIcons);
+            EditorPrefs.SetBool(PrefsPrefix + "ShowButtons", _showButtons);
             EditorPrefs.SetBool(PrefsPrefix + "ShowAlternatingRows", _showAlternatingRows);
             EditorPrefs.SetInt(PrefsPrefix + "DefaultFontSize", _defaultFontSize);
             SaveColorToPrefs("DefaultFontColor", _defaultFontColor);
@@ -174,6 +181,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             {
                 _showTreeLines = settings.showTreeLines;
                 _showComponentIcons = settings.showComponentIcons;
+                _showButtons = settings.showButtons;
                 _showAlternatingRows = settings.showAlternatingRows;
                 _defaultFontSize = settings.defaultFontSize;
                 _defaultFontColor = settings.defaultFontColor;
@@ -201,6 +209,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             settings.showTreeLines = _showTreeLines;
             settings.showComponentIcons = _showComponentIcons;
+            settings.showButtons = _showButtons;
             settings.showAlternatingRows = _showAlternatingRows;
             settings.defaultFontSize = _defaultFontSize;
             settings.defaultFontColor = _defaultFontColor;
