@@ -4,13 +4,13 @@ using UnityEngine.UI;
 
 namespace BitWaveLabs.HierarchyUX.Editor
 {
-    public static class HierarchyComponentIcons
+    public static class HierarchyGameObjectIcons
     {
         public static void Draw(int instanceID, Rect selectionRect)
         {
             HierarchyUXSettingsWindow.Settings settings = HierarchyUXSettingsWindow.GetSettings();
 
-            if (!settings.ShowComponentIcons)
+            if (!settings.ShowGameObjectIcons)
                 return;
 
             GameObject obj = EditorUtility.EntityIdToObject(instanceID) as GameObject;
@@ -71,7 +71,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 : new Color(0.76f, 0.76f, 0.76f);
             EditorGUI.DrawRect(iconRect, bgColor);
 
-            // Draw the component icon
+            // Draw the GameObject icon
             GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
         }
 

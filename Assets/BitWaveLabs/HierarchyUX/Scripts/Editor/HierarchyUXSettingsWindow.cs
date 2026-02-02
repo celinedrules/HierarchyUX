@@ -10,7 +10,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
         private bool _useProjectSettings;
         private bool _showTreeLines = true;
-        private bool _showComponentIcons = true;
+        private bool _showGameObjectIcons = true;
         private bool _showButtons = true;
         private bool _showAlternatingRows = true;
         private int _defaultFontSize = 12;
@@ -20,7 +20,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         public struct Settings
         {
             public bool ShowTreeLines;
-            public bool ShowComponentIcons;
+            public bool ShowGameObjectIcons;
             public bool ShowButtons;
             public bool ShowAlternatingRows;
             public int DefaultFontSize;
@@ -41,7 +41,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
                     return new Settings
                     {
                         ShowTreeLines = settings.showTreeLines,
-                        ShowComponentIcons = settings.showComponentIcons,
+                        ShowGameObjectIcons = settings.showGameObjectIcons,
                         ShowButtons = settings.showButtons,
                         ShowAlternatingRows = settings.showAlternatingRows,
                         DefaultFontSize = settings.defaultFontSize,
@@ -55,7 +55,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             return new Settings
             {
                 ShowTreeLines = EditorPrefs.GetBool(PrefsPrefix + "ShowTreeLines", true),
-                ShowComponentIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowComponentIcons", true),
+                ShowGameObjectIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowGameObjectIcons", true),
                 ShowButtons = EditorPrefs.GetBool(PrefsPrefix + "ShowButtons", true),
                 ShowAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true),
                 DefaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12),
@@ -111,7 +111,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             EditorGUILayout.Space(10);
 
             _showTreeLines = EditorGUILayout.Toggle("Show Tree Lines", _showTreeLines);
-            _showComponentIcons = EditorGUILayout.Toggle("Show Component Icons", _showComponentIcons);
+            _showGameObjectIcons = EditorGUILayout.Toggle("Show GameObject Icons", _showGameObjectIcons);
             _showButtons = EditorGUILayout.Toggle("Show Buttons", _showButtons);
             _showAlternatingRows = EditorGUILayout.Toggle("Show Alternating Rows", _showAlternatingRows);
 
@@ -154,7 +154,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private void LoadFromEditorPrefs()
         {
             _showTreeLines = EditorPrefs.GetBool(PrefsPrefix + "ShowTreeLines", true);
-            _showComponentIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowComponentIcons", true);
+            _showGameObjectIcons = EditorPrefs.GetBool(PrefsPrefix + "ShowGameObjectIcons", true);
             _showButtons = EditorPrefs.GetBool(PrefsPrefix + "ShowButtons", true);
             _showAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true);
             _defaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12);
@@ -165,7 +165,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private void SaveToEditorPrefs()
         {
             EditorPrefs.SetBool(PrefsPrefix + "ShowTreeLines", _showTreeLines);
-            EditorPrefs.SetBool(PrefsPrefix + "ShowComponentIcons", _showComponentIcons);
+            EditorPrefs.SetBool(PrefsPrefix + "ShowGameObjectIcons", _showGameObjectIcons);
             EditorPrefs.SetBool(PrefsPrefix + "ShowButtons", _showButtons);
             EditorPrefs.SetBool(PrefsPrefix + "ShowAlternatingRows", _showAlternatingRows);
             EditorPrefs.SetInt(PrefsPrefix + "DefaultFontSize", _defaultFontSize);
@@ -180,7 +180,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             if (settings)
             {
                 _showTreeLines = settings.showTreeLines;
-                _showComponentIcons = settings.showComponentIcons;
+                _showGameObjectIcons = settings.showGameObjectIcons;
                 _showButtons = settings.showButtons;
                 _showAlternatingRows = settings.showAlternatingRows;
                 _defaultFontSize = settings.defaultFontSize;
@@ -208,7 +208,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             }
 
             settings.showTreeLines = _showTreeLines;
-            settings.showComponentIcons = _showComponentIcons;
+            settings.showGameObjectIcons = _showGameObjectIcons;
             settings.showButtons = _showButtons;
             settings.showAlternatingRows = _showAlternatingRows;
             settings.defaultFontSize = _defaultFontSize;

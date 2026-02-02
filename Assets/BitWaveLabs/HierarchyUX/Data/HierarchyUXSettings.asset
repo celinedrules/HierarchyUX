@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: HierarchyUXSettings
   m_EditorClassIdentifier: Assembly-CSharp-Editor::BitWaveLabs.HierarchyUX.Editor.HierarchyUXSettings
   showTreeLines: 1
-  showComponentIcons: 1
+  showGameObjectIcons: 1
   showButtons: 1
   showAlternatingRows: 1
   defaultFontSize: 12
