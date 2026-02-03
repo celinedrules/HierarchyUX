@@ -5,126 +5,176 @@ namespace BitWaveLabs.HierarchyUX.Editor
 {
     public class HierarchyComponentPopup : EditorWindow
     {
+        private const float HeaderHeight = 18f;
+        private const float MinWidth = 300f;
+        private const float MinHeight = 600f;
+
+        private static readonly Color BackgroundColor = new(0.2f, 0.2f, 0.2f);
+        private static readonly Color HeaderColor = new(0.25f, 0.25f, 0.25f);
+        private static readonly Color OutlineColor = new(0.1f, 0.1f, 0.1f);
+        private static readonly Color SeparatorColor = new(0.2f, 0.2f, 0.2f);
+
+        public static HierarchyComponentPopup FloatingInstance { get; private set; }
+
         private Component _component;
         private UnityEditor.Editor _editor;
         private Vector2 _scrollPosition;
-        private bool _isPinned;
 
-        public static void Show(Component component, Rect buttonRect)
+        // Dragging state
+        private bool _isDragging;
+        private Vector2 _dragStartMousePos;
+        private Vector2 _dragStartWindowPos;
+
+        public static void Show(Component component, Vector2 position)
         {
-            // Convert button rect to screen coordinates
-            Vector2 screenPos = GUIUtility.GUIToScreenPoint(new Vector2(buttonRect.x, buttonRect.yMax));
+            if (!FloatingInstance)
+            {
+                FloatingInstance = CreateInstance<HierarchyComponentPopup>();
+                FloatingInstance.position = new Rect(position.x, position.y, MinWidth, MinHeight);
+                FloatingInstance.ShowPopup();
+            }
 
-            HierarchyComponentPopup window = CreateInstance<HierarchyComponentPopup>();
-            window._component = component;
-            window.titleContent = new GUIContent(ObjectNames.NicifyVariableName(component.GetType().Name));
-
-            // Position window below the button
-            Rect windowRect = new Rect(screenPos.x, screenPos.y, 350, 400);
-            window.position = windowRect;
-            window.ShowUtility();
+            FloatingInstance.SetComponent(component);
+            FloatingInstance.Focus();
         }
 
-        private void OnEnable()
-        {
-            if (_component)
-                CreateEditor();
-        }
-
-        private void OnDisable()
-        {
-            DestroyEditor();
-        }
-
-        private void CreateEditor()
+        public void SetComponent(Component component)
         {
             if (_editor)
                 DestroyImmediate(_editor);
+
+            _component = component;
 
             if (_component)
                 _editor = UnityEditor.Editor.CreateEditor(_component);
-        }
-
-        private void DestroyEditor()
-        {
-            if (_editor)
-            {
-                DestroyImmediate(_editor);
-                _editor = null;
-            }
         }
 
         private void OnGUI()
         {
             if (!_component)
             {
-                EditorGUILayout.HelpBox("Component has been destroyed.", MessageType.Warning);
+                Close();
                 return;
             }
 
-            // Recreate editor if needed
-            if (!_editor)
-                CreateEditor();
-
-            // Header with icon and controls
+            DrawBackground();
             DrawHeader();
+            DrawBody();
+            DrawOutline();
 
-            EditorGUILayout.Space(4);
+            // Handle dragging
+            HandleDragging();
+        }
 
-            // Scrollable component inspector
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-            {
-                if (_editor)
-                    _editor.OnInspectorGUI();
-            }
-            EditorGUILayout.EndScrollView();
+        private void DrawBackground()
+        {
+            EditorGUI.DrawRect(new Rect(0, 0, position.width, position.height), BackgroundColor);
+        }
+
+        private void DrawOutline()
+        {
+            Rect rect = new Rect(0, 0, position.width, position.height);
+
+            // Top
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1), OutlineColor);
+            // Bottom
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1, rect.width, 1), OutlineColor);
+            // Left
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1, rect.height), OutlineColor);
+            // Right
+            EditorGUI.DrawRect(new Rect(rect.xMax - 1, rect.y, 1, rect.height), OutlineColor);
         }
 
         private void DrawHeader()
         {
-            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            Rect headerRect = new Rect(1, 1, position.width - 2, HeaderHeight);
+
+            // Background
+            EditorGUI.DrawRect(headerRect, HeaderColor);
+
+            // Bottom separator
+            EditorGUI.DrawRect(new Rect(1, HeaderHeight, position.width - 2, 1), SeparatorColor);
+
+            // Close button
+            Rect closeButtonRect = new Rect(headerRect.xMax - 18, headerRect.y + 1, 16, 16);
+
+            if (GUI.Button(closeButtonRect, GUIContent.none, GUIStyle.none))
+                Close();
+
+            Color closeIconColor = closeButtonRect.Contains(Event.current.mousePosition)
+                ? new Color(0.9f, 0.9f, 0.9f)
+                : new Color(0.65f, 0.65f, 0.65f);
+
+            Color prevColor = GUI.color;
+            GUI.color = closeIconColor;
+            GUI.Label(closeButtonRect, EditorGUIUtility.IconContent("CrossIcon"));
+            GUI.color = prevColor;
+        }
+
+        private void DrawBody()
+        {
+            if (!_editor)
+                return;
+
+            Rect bodyRect = new Rect(1, HeaderHeight + 1, position.width - 2, position.height - HeaderHeight - 2);
+
+            GUILayout.BeginArea(bodyRect);
+
+            EditorGUIUtility.labelWidth = Mathf.Max(position.width * 0.4f, 120f);
+
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+            _editor.OnInspectorGUI();
+            EditorGUILayout.EndScrollView();
+
+            EditorGUIUtility.labelWidth = 0;
+
+            GUILayout.EndArea();
+        }
+
+        private void HandleDragging()
+        {
+            Rect headerRect = new Rect(0, 0, position.width - 20, HeaderHeight); // Exclude close button area
+            Event e = Event.current;
+            int controlId = GUIUtility.GetControlID(FocusType.Passive);
+
+            switch (e.type)
             {
-                // Component icon
-                Texture icon = EditorGUIUtility.ObjectContent(_component, _component.GetType()).image;
-                if (icon)
-                    GUILayout.Label(icon, GUILayout.Width(20), GUILayout.Height(18));
+                case EventType.MouseDown when headerRect.Contains(e.mousePosition):
+                    _isDragging = true;
+                    _dragStartMousePos = GUIUtility.GUIToScreenPoint(e.mousePosition);
+                    _dragStartWindowPos = position.position;
+                    GUIUtility.hotControl = controlId;
+                    e.Use();
+                    break;
 
-                // Component name
-                GUILayout.Label(ObjectNames.NicifyVariableName(_component.GetType().Name), EditorStyles.boldLabel);
+                case EventType.MouseDrag when _isDragging:
+                    Vector2 currentMousePos = GUIUtility.GUIToScreenPoint(e.mousePosition);
+                    Vector2 delta = currentMousePos - _dragStartMousePos;
+                    position = new Rect(_dragStartWindowPos + delta, position.size);
+                    e.Use();
+                    Repaint();
+                    break;
 
-                GUILayout.FlexibleSpace();
-
-                // Enable toggle button (for Behaviours)
-                if (_component is Behaviour behaviour)
-                {
-                    EditorGUI.BeginChangeCheck();
-                    bool isEnabled = GUILayout.Toggle(behaviour.enabled,  behaviour.enabled ? "Enabled" : "Disabled", EditorStyles.toolbarButton,
-                        GUILayout.Width(60));
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        Undo.RecordObject(behaviour, isEnabled ? "Enable Component" : "Disable Component");
-                        behaviour.enabled = isEnabled;
-                        EditorUtility.SetDirty(behaviour);
-                    }
-                }
-
-                // Pin toggle button
-                _isPinned = GUILayout.Toggle(_isPinned, "Pin", EditorStyles.toolbarButton, GUILayout.Width(30));
+                case EventType.MouseUp when _isDragging:
+                    _isDragging = false;
+                    GUIUtility.hotControl = 0;
+                    e.Use();
+                    break;
             }
-            EditorGUILayout.EndHorizontal();
+        }
+
+        private void OnDestroy()
+        {
+            if (_editor)
+                DestroyImmediate(_editor);
+
+            if (FloatingInstance == this)
+                FloatingInstance = null;
         }
 
         private void OnLostFocus()
         {
-            // Close when losing focus, unless pinned
-            if (!_isPinned)
-                Close();
-        }
-
-        private void OnInspectorUpdate()
-        {
-            // Keep the inspector updated
-            Repaint();
+            Close();
         }
     }
 }

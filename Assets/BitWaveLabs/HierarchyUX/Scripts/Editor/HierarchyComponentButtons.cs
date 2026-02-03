@@ -81,7 +81,9 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 string componentName = ObjectNames.NicifyVariableName(comp.GetType().Name);
                 if (GUI.Button(iconRect, new GUIContent("", componentName), GUIStyle.none))
                 {
-                    HierarchyComponentPopup.Show(comp, iconRect);
+                    Vector2 screenPos = GUIUtility.GUIToScreenPoint(new Vector2(iconRect.x, iconRect.yMax));
+                    HierarchyComponentPopup.Show(comp, screenPos);
+                    //HierarchyComponentPopup.Show(comp, iconRect);
                 }
 
                 GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
