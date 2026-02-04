@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: HierarchySeparatorData
   m_EditorClassIdentifier: Assembly-CSharp-Editor::BitWaveLabs.HierarchyUX.Editor.HierarchySeparatorData
   separators:
-  - instanceID: 48746
+  - globalObjectId: 
+    color: {r: 0, g: 0, b: 1, a: 1}
+    fontColor: {r: 1, g: 1, b: 1, a: 1}
+    fontSize: 12
+  - globalObjectId: GlobalObjectId_V1-2-8c9cfa26abfee488c85f1582747f6a02-1985004170-0
     color: {r: 0, g: 0, b: 1, a: 1}
     fontColor: {r: 1, g: 1, b: 1, a: 1}
     fontSize: 12

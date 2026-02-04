@@ -44,6 +44,11 @@ namespace BitWaveLabs.HierarchyUX.Editor
                     AssetDatabase.CreateAsset(_data, SeparatorDataPath);
                     AssetDatabase.SaveAssets();
                 }
+                else
+                {
+                    // Rebuild cache when data is loaded
+                    _data.RebuildCache();
+                }
             }
 
             return _data;

@@ -156,7 +156,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 Close();
 
             Color iconColor = buttonRect.Contains(Event.current.mousePosition)
-                ? new Color(0.9f, 0.9f, 0.9f)
+                ? new Color(1f, 0.0f, 0.0f)
                 : new Color(0.65f, 0.65f, 0.65f);
 
             Color prevColor = GUI.color;
