@@ -8,6 +8,9 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private const string SettingsAssetPath = HierarchyUX.DataBasePath + "HierarchyUXSettings.asset";
         private const string PrefsPrefix = "HierarchyUX_";
 
+        // Windows folder yellow: #FFD54F / RGB(255, 213, 79)
+        private static readonly Color DefaultFolderYellow = new(1f, 0.835f, 0.31f, 1f);
+
         private bool _useProjectSettings;
         private bool _showTreeLines = true;
         private bool _showGameObjectIcons = true;
@@ -17,6 +20,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private int _defaultFontSize = 12;
         private Color _defaultFontColor = Color.white;
         private Color _defaultBackgroundColor = Color.gray;
+        private Color _defaultFolderColor = DefaultFolderYellow;
 
         public struct Settings
         {
@@ -28,6 +32,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             public int DefaultFontSize;
             public Color DefaultFontColor;
             public Color DefaultBackgroundColor;
+            public Color DefaultFolderColor;
         }
         
         public static Settings GetSettings()
@@ -49,7 +54,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
                         ShowAlternatingRows = settings.showAlternatingRows,
                         DefaultFontSize = settings.defaultFontSize,
                         DefaultFontColor = settings.defaultFontColor,
-                        DefaultBackgroundColor = settings.defaultBackgroundColor
+                        DefaultBackgroundColor = settings.defaultBackgroundColor,
+                        DefaultFolderColor = settings.defaultFolderColor
                     };
                 }
             }
@@ -64,7 +70,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 ShowAlternatingRows = EditorPrefs.GetBool(PrefsPrefix + "ShowAlternatingRows", true),
                 DefaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12),
                 DefaultFontColor = LoadColorFromPrefsStatic("DefaultFontColor", Color.white),
-                DefaultBackgroundColor = LoadColorFromPrefsStatic("DefaultBackgroundColor", Color.gray)
+                DefaultBackgroundColor = LoadColorFromPrefsStatic("DefaultBackgroundColor", Color.gray),
+                DefaultFolderColor = LoadColorFromPrefsStatic("DefaultFolderColor", DefaultFolderYellow)
             };
         }
 
@@ -101,7 +108,6 @@ namespace BitWaveLabs.HierarchyUX.Editor
             _useProjectSettings = EditorGUILayout.Toggle("Use Project Settings", _useProjectSettings);
             if (EditorGUI.EndChangeCheck())
             {
-                // Save the storage preference immediately, then reload settings from the new source
                 EditorPrefs.SetBool(PrefsPrefix + "UseProjectSettings", _useProjectSettings);
                 LoadSettings();
             }
@@ -120,12 +126,17 @@ namespace BitWaveLabs.HierarchyUX.Editor
             _showComponentButtons = EditorGUILayout.Toggle("Show Component Buttons", _showComponentButtons);
             _showAlternatingRows = EditorGUILayout.Toggle("Show Alternating Rows", _showAlternatingRows);
 
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Separator Defaults", EditorStyles.boldLabel);
 
             _defaultFontSize = EditorGUILayout.IntField("Default Font Size", _defaultFontSize);
             _defaultFontColor = EditorGUILayout.ColorField("Default Font Color", _defaultFontColor);
             _defaultBackgroundColor = EditorGUILayout.ColorField("Default Background Color", _defaultBackgroundColor);
+
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Folder Defaults", EditorStyles.boldLabel);
+
+            _defaultFolderColor = EditorGUILayout.ColorField("Default Folder Color", _defaultFolderColor);
 
             GUILayout.FlexibleSpace();
 
@@ -166,6 +177,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             _defaultFontSize = EditorPrefs.GetInt(PrefsPrefix + "DefaultFontSize", 12);
             _defaultFontColor = LoadColorFromPrefs("DefaultFontColor", Color.white);
             _defaultBackgroundColor = LoadColorFromPrefs("DefaultBackgroundColor", Color.gray);
+            _defaultFolderColor = LoadColorFromPrefs("DefaultFolderColor", DefaultFolderYellow);
         }
 
         private void SaveToEditorPrefs()
@@ -178,6 +190,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             EditorPrefs.SetInt(PrefsPrefix + "DefaultFontSize", _defaultFontSize);
             SaveColorToPrefs("DefaultFontColor", _defaultFontColor);
             SaveColorToPrefs("DefaultBackgroundColor", _defaultBackgroundColor);
+            SaveColorToPrefs("DefaultFolderColor", _defaultFolderColor);
         }
 
         private void LoadFromScriptableObject()
@@ -194,6 +207,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
                 _defaultFontSize = settings.defaultFontSize;
                 _defaultFontColor = settings.defaultFontColor;
                 _defaultBackgroundColor = settings.defaultBackgroundColor;
+                _defaultFolderColor = settings.defaultFolderColor;
             }
         }
 
@@ -223,6 +237,7 @@ namespace BitWaveLabs.HierarchyUX.Editor
             settings.defaultFontSize = _defaultFontSize;
             settings.defaultFontColor = _defaultFontColor;
             settings.defaultBackgroundColor = _defaultBackgroundColor;
+            settings.defaultFolderColor = _defaultFolderColor;
 
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();

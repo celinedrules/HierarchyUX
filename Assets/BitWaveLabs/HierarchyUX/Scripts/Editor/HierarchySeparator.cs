@@ -88,7 +88,16 @@ namespace BitWaveLabs.HierarchyUX.Editor
             if (!Selection.activeGameObject)
                 return false;
 
-            return !GetData().IsSeparator(Selection.activeGameObject.GetInstanceID());
+            int instanceID = Selection.activeGameObject.GetInstanceID();
+
+            // Don't show if already a separator or if it's a folder
+            if (GetData().IsSeparator(instanceID))
+                return false;
+
+            if (HierarchyFolder.IsFolder(instanceID))
+                return false;
+
+            return true;
         }
 
         [MenuItem("GameObject/Hierarchy UX/Edit Separator", false, 1)]

@@ -22,6 +22,10 @@ namespace BitWaveLabs.HierarchyUX.Editor
             if (HierarchySeparator.IsSeparator(instanceID))
                 return;
 
+            // Skip folders - they have custom rendering
+            if (HierarchyFolder.IsFolder(instanceID))
+                return;
+            
             Component[] components = obj.GetComponents<Component>();
 
             if (components.Length == 0)
