@@ -5,7 +5,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
 {
     public class HierarchyComponentPopup : EditorWindow
     {
-        private const float HeaderHeight = 18f;
+        private const float HeaderHeight = 24f;
+        private const float ButtonSize = 20f;
         private const float MinWidth = 300f;
         private const float MinHeight = 600f;
 
@@ -14,11 +15,12 @@ namespace BitWaveLabs.HierarchyUX.Editor
         private static readonly Color OutlineColor = new(0.1f, 0.1f, 0.1f);
         private static readonly Color SeparatorColor = new(0.2f, 0.2f, 0.2f);
 
-        public static HierarchyComponentPopup FloatingInstance { get; private set; }
+        public static HierarchyComponentPopup Instance { get; private set; }
 
         private Component _component;
         private UnityEditor.Editor _editor;
         private Vector2 _scrollPosition;
+        private bool _isPinned;
 
         // Dragging state
         private bool _isDragging;
@@ -27,15 +29,15 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
         public static void Show(Component component, Vector2 position)
         {
-            if (!FloatingInstance)
+            if (!Instance)
             {
-                FloatingInstance = CreateInstance<HierarchyComponentPopup>();
-                FloatingInstance.position = new Rect(position.x, position.y, MinWidth, MinHeight);
-                FloatingInstance.ShowPopup();
+                Instance = CreateInstance<HierarchyComponentPopup>();
+                Instance.position = new Rect(position.x, position.y, MinWidth, MinHeight);
+                Instance.ShowPopup();
             }
 
-            FloatingInstance.SetComponent(component);
-            FloatingInstance.Focus();
+            Instance.SetComponent(component);
+            Instance.Focus();
         }
 
         public void SetComponent(Component component)
@@ -93,21 +95,98 @@ namespace BitWaveLabs.HierarchyUX.Editor
             EditorGUI.DrawRect(headerRect, HeaderColor);
 
             // Bottom separator
-            EditorGUI.DrawRect(new Rect(1, HeaderHeight, position.width - 2, 1), SeparatorColor);
+            EditorGUI.DrawRect(new Rect(1, HeaderHeight + 1, position.width - 2, 1), SeparatorColor);
 
-            // Close button
-            Rect closeButtonRect = new Rect(headerRect.xMax - 18, headerRect.y + 1, 16, 16);
+            // Center buttons vertically in header
+            float buttonY = headerRect.y + (HeaderHeight - ButtonSize) / 2f;
 
-            if (GUI.Button(closeButtonRect, GUIContent.none, GUIStyle.none))
+            // Close button (rightmost)
+            Rect closeButtonRect = new Rect(headerRect.xMax - ButtonSize - 2, buttonY, ButtonSize, ButtonSize);
+
+            // Pin button (left of close button)
+            Rect pinButtonRect = new Rect(closeButtonRect.x - ButtonSize - 2, buttonY, ButtonSize, ButtonSize);
+
+            // Component icon (top left)
+            Rect iconRect = new Rect(4, (HeaderHeight - 16) / 2f + 1, 16, 16);
+            Texture icon = EditorGUIUtility.ObjectContent(_component, _component.GetType()).image;
+            if (icon)
+                GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
+
+            // Track where the name label should start
+            float nameLabelX = iconRect.xMax + 4;
+
+            // Enable checkbox (only for Behaviours)
+            if (_component is Behaviour behaviour)
+            {
+                Rect toggleRect = new Rect(iconRect.xMax + 4, (HeaderHeight - 14) / 2f + 1, 14, 14);
+
+                EditorGUI.BeginChangeCheck();
+                bool isEnabled = GUI.Toggle(toggleRect, behaviour.enabled, GUIContent.none);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(behaviour, isEnabled ? "Enable Component" : "Disable Component");
+                    behaviour.enabled = isEnabled;
+                    EditorUtility.SetDirty(behaviour);
+                }
+
+                nameLabelX = toggleRect.xMax + 4;
+            }
+
+            // Component name (bold, white)
+            string componentName = ObjectNames.NicifyVariableName(_component.GetType().Name);
+            Rect nameRect = new Rect(nameLabelX, 1, pinButtonRect.x - nameLabelX - 4, HeaderHeight);
+            
+            GUIStyle nameStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                normal = { textColor = Color.white },
+                hover = { textColor = Color.white },
+                active = { textColor = Color.white },
+                focused = { textColor = Color.white }
+            };
+            GUI.Label(nameRect, componentName, nameStyle);
+
+            // Draw buttons
+            DrawCloseButton(closeButtonRect);
+            DrawPinButton(pinButtonRect);
+        }
+
+        private void DrawCloseButton(Rect buttonRect)
+        {
+            if (GUI.Button(buttonRect, GUIContent.none, GUIStyle.none))
                 Close();
 
-            Color closeIconColor = closeButtonRect.Contains(Event.current.mousePosition)
+            Color iconColor = buttonRect.Contains(Event.current.mousePosition)
                 ? new Color(0.9f, 0.9f, 0.9f)
                 : new Color(0.65f, 0.65f, 0.65f);
 
             Color prevColor = GUI.color;
-            GUI.color = closeIconColor;
-            GUI.Label(closeButtonRect, EditorGUIUtility.IconContent("CrossIcon"));
+            GUI.color = iconColor;
+            GUI.Label(buttonRect, EditorGUIUtility.IconContent("CrossIcon"));
+            GUI.color = prevColor;
+        }
+
+        private void DrawPinButton(Rect buttonRect)
+        {
+            if (GUI.Button(buttonRect, GUIContent.none, GUIStyle.none))
+                _isPinned = !_isPinned;
+
+            bool isHovered = buttonRect.Contains(Event.current.mousePosition);
+
+            Color iconColor;
+            if (_isPinned)
+                iconColor = new Color(0.5f, 0.8f, 1f); // Blue tint when pinned
+            else if (isHovered)
+                iconColor = new Color(0.9f, 0.9f, 0.9f);
+            else
+                iconColor = new Color(0.65f, 0.65f, 0.65f);
+
+            Color prevColor = GUI.color;
+            GUI.color = iconColor;
+
+            // Use different icon based on pinned state
+            string iconName = _isPinned ? "pinned" : "pin";
+            GUI.Label(buttonRect, EditorGUIUtility.IconContent(iconName));
+
             GUI.color = prevColor;
         }
 
@@ -116,24 +195,28 @@ namespace BitWaveLabs.HierarchyUX.Editor
             if (!_editor)
                 return;
 
-            Rect bodyRect = new Rect(1, HeaderHeight + 1, position.width - 2, position.height - HeaderHeight - 2);
+            Rect bodyRect = new Rect(7, HeaderHeight + 7, position.width - 14, position.height - HeaderHeight - 3);
 
             GUILayout.BeginArea(bodyRect);
 
-            EditorGUIUtility.labelWidth = Mathf.Max(position.width * 0.4f, 120f);
+            // Ensure we're using inspector mode (not hierarchy mode) for proper font sizes
+            EditorGUIUtility.hierarchyMode = false;
+            EditorGUIUtility.wideMode = position.width > 330f;
+            EditorGUIUtility.labelWidth = Mathf.Max(position.width * 0.45f, 120f);
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-            _editor.OnInspectorGUI();
-            EditorGUILayout.EndScrollView();
 
-            EditorGUIUtility.labelWidth = 0;
+            // Draw the inspector with default styles
+            _editor.OnInspectorGUI();
+
+            EditorGUILayout.EndScrollView();
 
             GUILayout.EndArea();
         }
 
         private void HandleDragging()
         {
-            Rect headerRect = new Rect(0, 0, position.width - 20, HeaderHeight); // Exclude close button area
+            Rect headerRect = new Rect(0, 0, position.width - 50, HeaderHeight); // Exclude button area
             Event e = Event.current;
             int controlId = GUIUtility.GetControlID(FocusType.Passive);
 
@@ -168,13 +251,14 @@ namespace BitWaveLabs.HierarchyUX.Editor
             if (_editor)
                 DestroyImmediate(_editor);
 
-            if (FloatingInstance == this)
-                FloatingInstance = null;
+            if (Instance == this)
+                Instance = null;
         }
 
         private void OnLostFocus()
         {
-            Close();
+            if (!_isPinned)
+                Close();
         }
     }
 }
