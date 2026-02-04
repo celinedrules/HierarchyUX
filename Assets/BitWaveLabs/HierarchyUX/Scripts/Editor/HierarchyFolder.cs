@@ -135,6 +135,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             // Set the folder icon in the inspector with the default color
             SetInspectorIcon(selected, settings.DefaultFolderColor);
+            
+            selected.transform.hideFlags = HideFlags.HideInInspector;
 
             EditorUtility.SetDirty(data);
             EditorUtility.SetDirty(selected);
@@ -190,6 +192,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
 
             if (!selected)
                 return;
+            
+            selected.transform.hideFlags = HideFlags.None;
 
             HierarchyFolderData data = GetData();
             data.RemoveFolder(selected.GetInstanceID());

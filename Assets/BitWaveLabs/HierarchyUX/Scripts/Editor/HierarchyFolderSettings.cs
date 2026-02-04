@@ -75,6 +75,8 @@ namespace BitWaveLabs.HierarchyUX.Editor
             }
 
             data.SetFolderColor(_targetObject.GetInstanceID(), _folderColor);
+            
+            _targetObject.transform.hideFlags = HideFlags.HideInInspector;
 
             // Update the inspector icon with the tinted color
             HierarchyFolder.SetInspectorIcon(_targetObject, _folderColor);
